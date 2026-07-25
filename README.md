@@ -1,98 +1,115 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Lot D — Agents SEO, GEO & Content
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Ce dépôt contient le code du **Lot D** de la plateforme AI SEO & GEO Automation Platform : les agents IA responsables de l'analyse SEO/GEO et de la génération de contenu.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## À propos du projet
 
-## Description
+Le projet global est découpé en 5 lots indépendants :
+- **Lot A** — Platform Core, Multi-clients & Modèle économique
+- **Lot B** — Frontend Web App
+- **Lot C** — Agents Crawl, Technical & Publishing
+- **Lot D (ce dépôt)** — Agents SEO, GEO & Content
+- **Lot E** — Analytics, Competitor, Visibilité IA, Copilot & Orchestrateur
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Ce lot construit 3 agents :
+- **SEO Agent** — audit on-page/technique (balises, maillage interne)
+- **GEO Agent** — optimisation pour les moteurs de réponse IA (FAQ, entités, structuration)
+- **Content Agent** — génération d'articles, FAQ, pages piliers
 
-## Project setup
+Et produit les propositions structurées de la fonctionnalité **"Correction automatique"**, envoyées au Lot A pour validation humaine (jamais publiées directement).
 
-```bash
-$ npm install
-```
+## Stack technique
 
-## Compile and run the project
+- **Framework** : NestJS
+- **Validation** : Zod
+- **IA** : adaptateur LLM générique (aucun appel direct au SDK fournisseur dans le code métier)
+- **Fournisseur LLM utilisé en développement** : Google Gemini (API gratuite)
 
-```bash
-# development
-$ npm run start
+## Prérequis
 
-# watch mode
-$ npm run start:dev
+- Node.js et npm installés
+- Une clé API Gemini gratuite (voir section Configuration ci-dessous)
 
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+## Installation
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+git clone <url-du-repo>
+cd lot-d-seo-geo-content
+npm install
 ```
 
-## Deployment
+## Configuration
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Crée un fichier `.env` à la racine du projet (non versionné, à créer soi-même) :
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```
+LLM_PROVIDER_API_KEY=ta_cle_gemini_ici
+LLM_PROVIDER_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+LOT_A_HISTORY_ENDPOINT=http://localhost:3001/history
+MOCK_MODE=true
+```
+
+> Obtiens une clé Gemini gratuite sur https://aistudio.google.com/ → "Get API key" → "Create API key".
+
+## Lancer le projet
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Le serveur démarre sur `http://localhost:3000`.
 
-## Resources
+## Tester un endpoint
 
-Check out a few resources that may come in handy when working with NestJS:
+Crée un fichier `body.json` à la racine (non versionné) avec un exemple de requête, par exemple :
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```json
+{"type":"article","sujet":"Le SEO en 2026","ton":"professionnel"}
+```
 
-## Support
+Puis, en PowerShell :
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```powershell
+Invoke-RestMethod -Uri "http://localhost:3000/content/generate" -Method Post -ContentType "application/json" -InFile "body.json"
+```
 
-## Stay in touch
+## État d'avancement
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- [x] **Phase 1** — Setup du projet NestJS, structure des dossiers, dépendances
+- [x] **Phase 2** — Adaptateur LLM générique (`src/llm/`), connecté à Google Gemini, testé et fonctionnel sur `/content/generate`
+- [ ] **Phase 3** — Schémas Zod (findings, rapport technique, proposition, contenu généré)
+- [ ] **Phase 4** — SEO Agent
+- [ ] **Phase 5** — GEO Agent
+- [ ] **Phase 6** — Content Agent (endpoint créé en Phase 2 pour tester le LLM, logique métier à finaliser en Phase 6)
+- [ ] **Phase 7** — Endpoint de correction automatique
+- [ ] **Phase 8** — Prototype RAG SEO
+- [ ] **Phase 9** — Tests
+- [ ] **Phase 10** — Intégration avec les autres lots
 
-## License
+## Structure du projet
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+src/
+  llm/            # adaptateur LLM générique (Phase 2 — fait)
+  seo/            # SEO Agent (à venir)
+  geo/            # GEO Agent (à venir)
+  content/        # Content Agent (à venir)
+  corrections/    # endpoint de correction automatique (à venir)
+  rag/            # prototype RAG SEO (à venir)
+  common/
+    schemas/      # schémas Zod (à venir)
+    types/
+  history-client/ # client HTTP vers le Lot A (à venir)
+```
+
+## Règle importante
+
+Le SDK du fournisseur LLM ne doit **jamais** être importé directement dans le code métier (SEO/GEO/Content). Tout appel LLM passe par `LlmService` (`src/llm/llm.service.ts`).
+
+## Collaboration avec les autres lots
+
+- **Lot A** : ce lot enverra ses propositions via `POST /history`, format à confirmer
+- **Lot C** : ce lot consommera les findings de crawl et le rapport technique, format actuellement provisoire (voir commentaires `FORMAT PROVISOIRE` dans le code une fois la Phase 3 réalisée)
+- **Lot B** : les schémas Zod des propositions seront partagés une fois la Phase 3 terminée
+- **Lot E** : la documentation des endpoints sera partagée une fois tous les agents finalisés
+-
