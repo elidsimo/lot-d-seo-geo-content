@@ -78,14 +78,14 @@ Invoke-RestMethod -Uri "http://localhost:3000/content/generate" -Method Post -Co
 
 ```
 src/
-  llm/            # adaptateur LLM générique (Phase 2 — fait)
+  llm/            # adaptateur LLM générique 
   seo/            # SEO Agent (à venir)
   geo/            # GEO Agent (à venir)
   content/        # Content Agent (à venir)
   corrections/    # endpoint de correction automatique (à venir)
   rag/            # prototype RAG SEO (à venir)
   common/
-    schemas/      # schémas Zod (à venir)
+    schemas/      # schémas Zod 
     types/
   history-client/ # client HTTP vers le Lot A (à venir)
 ```
@@ -94,10 +94,3 @@ src/
 
 Le SDK du fournisseur LLM ne doit **jamais** être importé directement dans le code métier (SEO/GEO/Content). Tout appel LLM passe par `LlmService` (`src/llm/llm.service.ts`).
 
-## Collaboration avec les autres lots
-
-- **Lot A** : ce lot enverra ses propositions via `POST /history`, format à confirmer
-- **Lot C** : ce lot consommera les findings de crawl et le rapport technique, format actuellement provisoire (voir commentaires `FORMAT PROVISOIRE` dans le code une fois la Phase 3 réalisée)
-- **Lot B** : les schémas Zod des propositions seront partagés une fois la Phase 3 terminée
-- **Lot E** : la documentation des endpoints sera partagée une fois tous les agents finalisés
--
