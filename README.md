@@ -73,18 +73,6 @@ Puis, en PowerShell :
 Invoke-RestMethod -Uri "http://localhost:3000/content/generate" -Method Post -ContentType "application/json" -InFile "body.json"
 ```
 
-## État d'avancement
-
-- [x] **Phase 1** — Setup du projet NestJS, structure des dossiers, dépendances
-- [x] **Phase 2** — Adaptateur LLM générique (`src/llm/`), connecté à Google Gemini, testé et fonctionnel sur `/content/generate`
-- [ ] **Phase 3** — Schémas Zod (findings, rapport technique, proposition, contenu généré)
-- [ ] **Phase 4** — SEO Agent
-- [ ] **Phase 5** — GEO Agent
-- [ ] **Phase 6** — Content Agent (endpoint créé en Phase 2 pour tester le LLM, logique métier à finaliser en Phase 6)
-- [ ] **Phase 7** — Endpoint de correction automatique
-- [ ] **Phase 8** — Prototype RAG SEO
-- [ ] **Phase 9** — Tests
-- [ ] **Phase 10** — Intégration avec les autres lots
 
 ## Structure du projet
 
