@@ -33,6 +33,7 @@ Ce lot produit aussi les propositions structurées de la fonctionnalité **"Corr
 ## Prérequis
 
 - Node.js et npm installés
+- Docker (pour la base PostgreSQL + pgvector utilisée par le prototype RAG)
 - Une clé API Gemini gratuite (voir section Configuration ci-dessous)
 
 ## Installation
@@ -50,11 +51,23 @@ Crée un fichier `.env` à la racine du projet (non versionné, à créer soi-m�
 ```
 LLM_PROVIDER_API_KEY=ta_cle_gemini_ici
 LLM_PROVIDER_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+LLM_PROVIDER_MODEL=gemini-3.5-flash-lite
+LLM_PROVIDER_EMBEDDING_MODEL=gemini-embedding-001
 LOT_A_HISTORY_ENDPOINT=http://localhost:3001/history
 MOCK_MODE=true
+DATABASE_URL=postgresql://postgres:ton_mot_de_passe@localhost:5432/postgres
 ```
 
 > Obtiens une clé Gemini gratuite sur https://aistudio.google.com/ → "Get API key" → "Create API key".
+
+### Base de données (prototype RAG)
+
+Le prototype RAG (`src/rag/`) nécessite une base PostgreSQL avec l'extension `pgvector` :
+
+```bash
+docker run --name pgvector-db -e POSTGRES_PASSWORD=ton_mot_de_passe -p 5432:5432 -d ankane/pgvector
+docker exec -it pgvector-db psql -U postgres -c "CREATE TABLE documents (id SERIAL PRIMARY KEY, client_id TEXT, texte TEXT, embedding vector(3072));"
+```
 
 ## Lancer le projet
 
@@ -72,6 +85,8 @@ Le serveur démarre sur `http://localhost:3000`.
 | POST | `/geo/optimize/:pageId` | Optimisation du contenu pour les moteurs de réponse IA |
 | POST | `/content/generate` | Génération de contenu (article, faq, pillar_page) |
 | POST | `/corrections/propose/:pageUrl` | Combine SEO Agent + envoi des propositions au Lot A (mode mock actif) |
+| POST | `/rag/index` | Indexe un document (texte + embedding) pour un client donné |
+| POST | `/rag/search` | Recherche par similarité sémantique dans les documents indexés d'un client |
 
 ## Tester un endpoint
 
@@ -97,10 +112,31 @@ Adapte le nom du fichier body et l'URL selon l'endpoint testé. Exemple pour `/c
 Invoke-RestMethod -Uri "http://localhost:3000/corrections/propose/exemple-page1" -Method Post -ContentType "application/json" -InFile "body-corrections.json"
 ```
 
+Exemple pour `/rag/index` puis `/rag/search` :
+
+```json
+{"clientId":"client-test-1","texte":"Notre agence recommande toujours d'optimiser les balises title."}
+```
+
+```json
+{"clientId":"client-test-1","requete":"Comment optimiser mes balises title ?"}
+```
+
 ## Lancer les tests
 
+Tests unitaires (services isolés, dépendances mockées) :
 ```bash
 npm run test
+```
+
+Tests end-to-end (vraies routes HTTP, dépendances externes mockées) :
+```bash
+npm run test:e2e
+```
+
+Couverture de code :
+```bash
+npm run test:cov
 ```
 
 ## Schémas Zod (`src/common/schemas/`)
