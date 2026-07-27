@@ -15,4 +15,5 @@ body.json
 body-seo.json
 body-geo.json
 body-corrections.json
-
+body-rag-index.json
+body-rag-search.json

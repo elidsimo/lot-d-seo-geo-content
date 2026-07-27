@@ -64,4 +64,17 @@ export class LlmService implements LlmAdapter {
       throw error;
     }
   }
+  async embed(text: string): Promise<number[]> {
+    const apiKey = this.config.get('LLM_PROVIDER_API_KEY');
+    const baseUrl = this.config.get('LLM_PROVIDER_BASE_URL');
+
+    const response = await axios.post(
+      `${baseUrl}/models/gemini-embedding-001:embedContent?key=${apiKey}`,
+      {
+        content: { parts: [{ text }] },
+      },
+    );
+
+    return response.data.embedding.values;
+  }
 }
