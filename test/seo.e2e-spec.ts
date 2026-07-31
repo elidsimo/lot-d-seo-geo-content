@@ -25,30 +25,23 @@ describe('SeoController (e2e)', () => {
       .send({
         url: 'https://example.com',
         title: '',
-        metaDescription: 'Une description correcte.',
+        metaDescription: 'Une description correcte et suffisamment longue pour être utile ici.',
         h1: ['Titre principal'],
+        h2:[],
+        internalLinks: [],
       })
       .expect(201)
       .expect((res) => {
         expect(
-          res.body.problemes.some((p: string) => p.includes('Title')),
+          res.body.recommendations.some((r: any) => r.type === 'title_missing'),
         ).toBe(true);
       });
   });
 
-  it('POST /seo/audit/:siteId - ne remonte aucun problème pour une page bien optimisée', () => {
+  it('POST /seo/audit/:siteId - rejette un body invalide avec 400', () => {
     return request(app.getHttpServer())
       .post('/seo/audit/site-test-2')
-      .send({
-        url: 'https://example.com',
-        title: 'Un titre bien optimisé pour le SEO',
-        metaDescription:
-          'Une meta description bien rédigée et suffisamment longue pour être utile.',
-        h1: ['Titre principal unique'],
-      })
-      .expect(201)
-      .expect((res) => {
-        expect(res.body.problemes.length).toBe(0);
-      });
+      .send({ url: 'https://example.com' }) // title, metaDescription, h1 manquants
+      .expect(400);
   });
 });

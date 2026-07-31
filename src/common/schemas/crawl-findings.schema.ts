@@ -11,3 +11,4 @@ export const CrawlFindingsSchema = z.object({
 });
 
 export type CrawlFindings = z.infer<typeof CrawlFindingsSchema>;
+
