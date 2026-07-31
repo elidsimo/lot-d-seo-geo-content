@@ -27,7 +27,7 @@ describe('SeoController (e2e)', () => {
         title: '',
         metaDescription: 'Une description correcte et suffisamment longue pour être utile ici.',
         h1: ['Titre principal'],
-        h2:[],
+        h2: [],
         internalLinks: [],
       })
       .expect(201)

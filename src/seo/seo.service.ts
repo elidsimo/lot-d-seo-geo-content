@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CrawlFindings } from '../common/schemas/crawl-findings.schema';
+import { TechnicalReport } from '../common/schemas/technical-report.schema';
 import { Recommendation, AuditResult } from '../common/types/recommendation.type';
 
 @Injectable()
@@ -13,6 +14,19 @@ export class SeoService {
 
     return {
       url: findings.url,
+      score: this.computeScore(recommendations),
+      recommendations,
+    };
+  }
+
+  auditTechnique(report: TechnicalReport): AuditResult {
+    const recommendations: Recommendation[] = [
+      ...this.analyzeCoreWebVitals(report.coreWebVitals),
+      ...this.analyzeErreursTechniques(report.erreursTechniques),
+    ];
+
+    return {
+      url: report.url,
       score: this.computeScore(recommendations),
       recommendations,
     };
@@ -116,6 +130,73 @@ export class SeoService {
     }
 
     return recommendations;
+  }
+
+  private analyzeCoreWebVitals(
+    coreWebVitals: TechnicalReport['coreWebVitals'],
+  ): Recommendation[] {
+    const recommendations: Recommendation[] = [];
+    const { lcp, cls, inp } = coreWebVitals;
+
+    // Seuils officiels Google (LCP et INP en millisecondes, CLS sans unité)
+    if (lcp > 4000) {
+      recommendations.push({
+        type: 'lcp_poor',
+        severity: 'high',
+        message: `LCP élevé (${lcp}ms) — expérience jugée mauvaise par Google.`,
+        suggestion: 'Optimiser le chargement du plus grand élément visible (images, polices, temps de réponse serveur).',
+      });
+    } else if (lcp > 2500) {
+      recommendations.push({
+        type: 'lcp_needs_improvement',
+        severity: 'medium',
+        message: `LCP à améliorer (${lcp}ms).`,
+        suggestion: 'Réduire le LCP sous 2500ms pour une bonne expérience utilisateur.',
+      });
+    }
+
+    if (cls > 0.25) {
+      recommendations.push({
+        type: 'cls_poor',
+        severity: 'high',
+        message: `CLS élevé (${cls}) — mise en page instable.`,
+        suggestion: "Réserver l'espace des images/publicités pour éviter les décalages visuels.",
+      });
+    } else if (cls > 0.1) {
+      recommendations.push({
+        type: 'cls_needs_improvement',
+        severity: 'medium',
+        message: `CLS à améliorer (${cls}).`,
+        suggestion: 'Réduire le CLS sous 0.1.',
+      });
+    }
+
+    if (inp > 500) {
+      recommendations.push({
+        type: 'inp_poor',
+        severity: 'high',
+        message: `INP élevé (${inp}ms) — interactions lentes.`,
+        suggestion: 'Réduire le temps de réponse aux interactions (alléger le JavaScript, éviter les tâches longues).',
+      });
+    } else if (inp > 200) {
+      recommendations.push({
+        type: 'inp_needs_improvement',
+        severity: 'medium',
+        message: `INP à améliorer (${inp}ms).`,
+        suggestion: "Réduire l'INP sous 200ms.",
+      });
+    }
+
+    return recommendations;
+  }
+
+  private analyzeErreursTechniques(erreurs: string[]): Recommendation[] {
+    return erreurs.map((erreur) => ({
+      type: 'technical_error',
+      severity: 'high',
+      message: erreur,
+      suggestion: 'Corriger cette erreur technique remontée par le Crawl Agent.',
+    }));
   }
 
   private computeScore(recommendations: Recommendation[]): number {
