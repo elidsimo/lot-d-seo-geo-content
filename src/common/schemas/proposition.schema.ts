@@ -15,6 +15,7 @@ export const PropositionSchema = z.object({
   valeurAvant: z.string().nullable(),
   valeurApres: z.string(),
   justification: z.string(),
+  priorite: z.enum(['low', 'medium', 'high']).default('medium'),
 });
 
 export type Proposition = z.infer<typeof PropositionSchema>;
