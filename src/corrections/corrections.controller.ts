@@ -7,7 +7,9 @@ import {
 } from '@nestjs/common';
 import { CorrectionsService } from './corrections.service';
 import { CorrectionsRequestSchema } from '../common/schemas/corrections-request.schema';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('corrections')
 @Controller('corrections')
 export class CorrectionsController {
   constructor(private correctionsService: CorrectionsService) {}

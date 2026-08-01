@@ -1,6 +1,9 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { RagService } from './rag.service';
+import { ApiTags } from '@nestjs/swagger';
 
+
+@ApiTags('rag')
 @Controller('rag')
 export class RagController {
   constructor(private ragService: RagService) {}

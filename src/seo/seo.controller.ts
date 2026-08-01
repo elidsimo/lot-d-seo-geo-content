@@ -1,7 +1,9 @@
 import { Controller, Post, Param, Body, BadRequestException } from '@nestjs/common';
 import { SeoService } from './seo.service';
 import { CrawlFindingsSchema } from '../common/schemas/crawl-findings.schema';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('seo')
 @Controller('seo')
 export class SeoController {
   constructor(private seoService: SeoService) {}

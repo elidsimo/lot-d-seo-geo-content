@@ -87,4 +87,10 @@ describe('ContentController (e2e)', () => {
       .send({ sujet: 'ok' })
       .expect(400);
   });
+  it('POST /content/generate - rejette un body invalide (validation Zod ajoutee en Phase 15)', () => {
+    return request(app.getHttpServer())
+      .post('/content/generate')
+      .send({ type: 'type_invalide', sujet: 'ok', ton: 'professionnel' })
+      .expect(400);
+  });
 });

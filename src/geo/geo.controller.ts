@@ -7,7 +7,9 @@ import {
 } from '@nestjs/common';
 import { GeoService } from './geo.service';
 import { GeoOptimizeRequestSchema } from '../common/schemas/geo-request.schema';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('geo')
 @Controller('geo')
 export class GeoController {
   constructor(private geoService: GeoService) {}
