@@ -67,4 +67,34 @@ describe('RagService', () => {
     expect(mockLlmService.embed).toHaveBeenCalledWith('question test');
     expect(result).toEqual([{ texte: 'Résultat trouvé' }]);
   });
+
+  it('should retrieve and format SEO knowledge as context, using the shared guides by default', async () => {
+    mockLlmService.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+
+    const poolInstance = (service as any).pool;
+    poolInstance.query.mockResolvedValue({
+      rows: [{ texte: 'Le title doit faire entre 30 et 60 caracteres.' }],
+    });
+
+    const context = await service.retrieveSeoKnowledge('Comment optimiser mon title ?');
+
+    expect(mockLlmService.embed).toHaveBeenCalledWith('Comment optimiser mon title ?');
+    expect(poolInstance.query).toHaveBeenCalledWith(
+      expect.any(String),
+      ['shared-seo-guides', JSON.stringify([0.1, 0.2, 0.3]), 3],
+    );
+    expect(context).toContain('30 et 60 caracteres');
+    expect(context).toContain('[Extrait 1]');
+  });
+
+  it('should return an empty string when no relevant document is found', async () => {
+    mockLlmService.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+
+    const poolInstance = (service as any).pool;
+    poolInstance.query.mockResolvedValue({ rows: [] });
+
+    const context = await service.retrieveSeoKnowledge('question sans rapport');
+
+    expect(context).toBe('');
+  });
 });

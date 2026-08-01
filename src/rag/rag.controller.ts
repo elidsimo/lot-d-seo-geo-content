@@ -17,4 +17,10 @@ export class RagController {
   search(@Body() body: { clientId: string; requete: string }) {
     return this.ragService.search(body.clientId, body.requete);
   }
+
+  @Post('retrieve')
+  async retrieve(@Body() body: { query: string; clientId?: string }) {
+    const context = await this.ragService.retrieveSeoKnowledge(body.query, body.clientId);
+    return { context };
+  }
 }

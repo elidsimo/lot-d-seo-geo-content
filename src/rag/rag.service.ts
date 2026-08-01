@@ -3,6 +3,8 @@ import { Pool } from 'pg';
 import { ConfigService } from '@nestjs/config';
 import { LlmService } from '../llm/llm.service';
 
+const DEFAULT_KNOWLEDGE_CLIENT_ID = 'shared-seo-guides';
+
 @Injectable()
 export class RagService {
   private pool: Pool;
@@ -15,6 +17,8 @@ export class RagService {
       connectionString: this.config.get('DATABASE_URL'),
     });
   }
+
+// Sous-tâche 2 : Indexation de documents dans la base de données
 
   async indexDocument(clientId: string, texte: string) {
     const embedding = await this.llm.embed(texte);
@@ -32,5 +36,22 @@ export class RagService {
       [clientId, JSON.stringify(embeddingRecherche), limit],
     );
     return result.rows;
+  }
+
+// sous tache 3
+
+  async retrieveSeoKnowledge(
+    query: string,
+    clientId: string = DEFAULT_KNOWLEDGE_CLIENT_ID,
+  ): Promise<string> {
+    const results = await this.search(clientId, query, 3);
+
+    if (results.length === 0) {
+      return '';
+    }
+
+    return results
+      .map((r, i) => `[Extrait ${i + 1}]\n${r.texte}`)
+      .join('\n\n');
   }
 }
