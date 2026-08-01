@@ -17,6 +17,7 @@ export class GeoService {
   private readonly logger = new Logger(GeoService.name);
 
   constructor(private llm: LlmService) {}
+
   async optimizeForAiEngines(
     content: string,
     existingFaq: FaqPair[] = [],
@@ -39,8 +40,7 @@ ${content}
 FAQ existante (peut être vide) :
 ${JSON.stringify(existingFaq)}`;
 
-    const raw = await this.llm.generate(prompt);
-    return this.parseAndValidate(raw, GeoOptimizeResultSchema, 'optimizeForAiEngines');
+    return this.generateAndValidate(prompt, GeoOptimizeResultSchema, 'optimizeForAiEngines');
   }
 
   async analyzeFaqQuality(
@@ -62,8 +62,7 @@ ${content}
 FAQ existante :
 ${JSON.stringify(existingFaq)}`;
 
-    const raw = await this.llm.generate(prompt);
-    return this.parseAndValidate(raw, FaqQualityAnalysisSchema, 'analyzeFaqQuality');
+    return this.generateAndValidate(prompt, FaqQualityAnalysisSchema, 'analyzeFaqQuality');
   }
 
   async enrichEntities(content: string): Promise<EntityMention[]> {
@@ -74,18 +73,21 @@ ${JSON.stringify(existingFaq)}`;
 Contenu :
 ${content}`;
 
-    const raw = await this.llm.generate(prompt);
-    return this.parseAndValidate(raw, z.array(EntityMentionSchema), 'enrichEntities');
+    return this.generateAndValidate(prompt, z.array(EntityMentionSchema), 'enrichEntities');
   }
+
   async optimizePage(pageContent: string): Promise<{ optimizedContent: string }> {
     const result = await this.optimizeForAiEngines(pageContent);
     return { optimizedContent: result.structuredContent };
   }
-  private parseAndValidate<T>(
-    raw: string,
+
+  private async generateAndValidate<T>(
+    prompt: string,
     schema: z.ZodType<T>,
     methodName: string,
-  ): T {
+    attempt = 1,
+  ): Promise<T> {
+    const raw = await this.llm.generate(prompt);
     const cleaned = raw
       .trim()
       .replace(/^```json/i, '')
@@ -97,20 +99,24 @@ ${content}`;
     try {
       parsedJson = JSON.parse(cleaned);
     } catch {
-      this.logger.error(`[${methodName}] Réponse LLM non-JSON: ${raw}`);
-      throw new Error(
-        `La réponse du LLM pour ${methodName} n'est pas un JSON valide`,
-      );
+      if (attempt < 2) {
+        this.logger.warn(`[${methodName}] JSON invalide, nouvelle tentative (${attempt}/2)...`);
+        return this.generateAndValidate(prompt, schema, methodName, attempt + 1);
+      }
+      this.logger.error(`[${methodName}] Réponse LLM non-JSON après ${attempt} tentatives: ${raw}`);
+      throw new Error(`La réponse du LLM pour ${methodName} n'est pas un JSON valide`);
     }
 
     const result = schema.safeParse(parsedJson);
     if (!result.success) {
+      if (attempt < 2) {
+        this.logger.warn(`[${methodName}] JSON ne respecte pas le schéma, nouvelle tentative (${attempt}/2)...`);
+        return this.generateAndValidate(prompt, schema, methodName, attempt + 1);
+      }
       this.logger.error(
-        `[${methodName}] JSON invalide selon le schéma: ${JSON.stringify(result.error.issues)}`,
+        `[${methodName}] JSON invalide selon le schéma après ${attempt} tentatives: ${JSON.stringify(result.error.issues)}`,
       );
-      throw new Error(
-        `La réponse du LLM pour ${methodName} ne respecte pas le format attendu`,
-      );
+      throw new Error(`La réponse du LLM pour ${methodName} ne respecte pas le format attendu`);
     }
     return result.data;
   }

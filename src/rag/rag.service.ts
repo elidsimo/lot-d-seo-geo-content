@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Pool } from 'pg';
 import { ConfigService } from '@nestjs/config';
 import { LlmService } from '../llm/llm.service';
@@ -6,7 +6,7 @@ import { LlmService } from '../llm/llm.service';
 const DEFAULT_KNOWLEDGE_CLIENT_ID = 'shared-seo-guides';
 
 @Injectable()
-export class RagService {
+export class RagService implements OnModuleDestroy {
   private pool: Pool;
 
   constructor(
@@ -16,6 +16,10 @@ export class RagService {
     this.pool = new Pool({
       connectionString: this.config.get('DATABASE_URL'),
     });
+  }
+
+  async onModuleDestroy() {
+    await this.pool.end();
   }
 
 // Sous-tâche 2 : Indexation de documents dans la base de données
