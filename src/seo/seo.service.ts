@@ -2,7 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { CrawlFindings } from '../common/schemas/crawl-findings.schema';
 import { TechnicalReport } from '../common/schemas/technical-report.schema';
 import { Recommendation, AuditResult } from '../common/types/recommendation.type';
+import { InternalLink } from '../common/schemas/crawl-findings.schema';
+import { SiteCrawl } from '../common/schemas/internal-linking.schema';
+import { InternalLinkingRecommendation, InternalLinkingAuditResult } from '../common/types/internal-linking-recommendation.type';
 
+const GENERIC_ANCHOR_PHRASES = [
+  'cliquez ici',
+  'ici',
+  'en savoir plus',
+  'lire la suite',
+  'voir plus',
+  "plus d'infos",
+  "plus d'informations",
+  'ce lien',
+  'cette page',
+];
 @Injectable()
 export class SeoService {
   auditOnPage(findings: CrawlFindings): AuditResult {
@@ -31,6 +45,127 @@ export class SeoService {
       recommendations,
     };
   }
+
+  auditInternalLinking(siteCrawl: SiteCrawl): InternalLinkingAuditResult {
+    const pages = siteCrawl.pages;
+    const knownUrls = new Set(pages.map((p) => p.url));
+    const recommendations: InternalLinkingRecommendation[] = [];
+
+    // parser la cartographie (graphe de liens) 
+    const incomingCount = new Map<string, number>();
+    const anchorsByTarget = new Map<string, string[]>();
+    pages.forEach((p) => incomingCount.set(p.url, 0));
+
+    for (const page of pages) {
+      for (const link of page.internalLinks) {
+        // --- Sous-tâche 2 : analyse de chaque ancre textuelle ---
+        recommendations.push(...this.analyzeAnchorText(page.url, link, pages));
+
+        if (knownUrls.has(link.url)) {
+          incomingCount.set(link.url, (incomingCount.get(link.url) ?? 0) + 1);
+          const list = anchorsByTarget.get(link.url) ?? [];
+          list.push(link.anchorText.trim().toLowerCase());
+          anchorsByTarget.set(link.url, list);
+        }
+      }
+    }
+
+    // diversite des ancres vers une même cible 
+    for (const [targetUrl, anchors] of anchorsByTarget.entries()) {
+      const uniqueAnchors = new Set(anchors);
+      if (anchors.length >= 2 && uniqueAnchors.size === 1) {
+        recommendations.push({
+          type: 'anchor_low_diversity',
+          severity: 'medium',
+          message: `Toutes les ${anchors.length} ancres pointant vers cette page utilisent exactement le même texte ("${anchors[0]}").`,
+          suggestion:
+            "Varier les textes d'ancrage entre les différentes pages sources pour un maillage plus naturel.",
+          page: targetUrl,
+        });
+      }
+    }
+
+    // opportunites/anomalies pages orphelines
+    for (const page of pages) {
+      if ((incomingCount.get(page.url) ?? 0) === 0) {
+        recommendations.push({
+          type: 'orphan_page',
+          severity: 'high',
+          message: 'Cette page ne reçoit aucun lien interne depuis les autres pages du site.',
+          suggestion:
+            'Ajouter au moins un lien interne pertinent pointant vers cette page depuis une page connexe.',
+          page: page.url,
+        });
+      }
+    }
+
+    return {
+      score: this.computeScore(recommendations),
+      recommendations,
+    };
+  }
+
+  private analyzeAnchorText(
+    sourceUrl: string,
+    link: InternalLink,
+    pages: CrawlFindings[],
+  ): InternalLinkingRecommendation[] {
+    const recommendations: InternalLinkingRecommendation[] = [];
+    const anchor = link.anchorText.trim();
+
+    if (anchor.length === 0) {
+      recommendations.push({
+        type: 'empty_anchor',
+        severity: 'high',
+        message: `Lien vers ${link.url} sans texte d'ancrage.`,
+        suggestion: "Ajouter un texte d'ancrage descriptif plutôt qu'un lien vide.",
+        page: sourceUrl,
+      });
+      return recommendations;
+    }
+
+    if (GENERIC_ANCHOR_PHRASES.includes(anchor.toLowerCase())) {
+      recommendations.push({
+        type: 'generic_anchor_text',
+        severity: 'medium',
+        message: `Texte d'ancrage générique ("${anchor}") vers ${link.url}.`,
+        suggestion:
+          'Remplacer par un texte descriptif reprenant le sujet de la page cible (ex: le titre de la page ciblée).',
+        page: sourceUrl,
+      });
+    }
+
+    const targetPage = pages.find((p) => p.url === link.url);
+    if (targetPage?.title) {
+      const anchorWords = this.significantWords(anchor);
+      const titleWords = this.significantWords(targetPage.title);
+      const overlap = anchorWords.filter((w) => titleWords.includes(w));
+
+      if (anchorWords.length > 0 && overlap.length === 0) {
+        recommendations.push({
+          type: 'anchor_not_relevant',
+          severity: 'low',
+          message: `Le texte d'ancrage ("${anchor}") ne partage aucun mot-clé avec le titre de la page cible ("${targetPage.title}").`,
+          suggestion: "Rapprocher le texte d'ancrage du sujet réel de la page cible.",
+          page: sourceUrl,
+        });
+      }
+    }
+
+    return recommendations;
+  }
+
+  private significantWords(text: string): string[] {
+    const stopWords = new Set([
+      'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'et', 'ou', 'a',
+      'au', 'aux', 'pour', 'sur', 'dans', 'par', 'ce', 'cette', 'ces',
+    ]);
+    return text
+      .toLowerCase()
+      .split(/[^a-zàâäéèêëïîôöùûüç0-9]+/)
+      .filter((w) => w.length > 2 && !stopWords.has(w));
+  }
+
 
   private analyzeTitleTag(title: string | null): Recommendation[] {
     const recommendations: Recommendation[] = [];

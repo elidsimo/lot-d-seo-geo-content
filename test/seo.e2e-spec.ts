@@ -44,4 +44,39 @@ describe('SeoController (e2e)', () => {
       .send({ url: 'https://example.com' }) // title, metaDescription, h1 manquants
       .expect(400);
   });
+  it('POST /seo/internal-linking/:siteId - detecte une page orpheline', () => {
+    return request(app.getHttpServer())
+      .post('/seo/internal-linking/site-test-1')
+      .send({
+        pages: [
+          {
+            url: 'https://example.com/a',
+            title: 'Page A',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['A'],
+            h2: [],
+            internalLinks: [],
+          },
+          {
+            url: 'https://example.com/b',
+            title: 'Page B',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['B'],
+            h2: [],
+            internalLinks: [],
+          },
+        ],
+      })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.recommendations.some((r: any) => r.type === 'orphan_page')).toBe(true);
+      });
+  });
+
+  it('POST /seo/internal-linking/:siteId - rejette un body sans pages (validation Zod)', () => {
+    return request(app.getHttpServer())
+      .post('/seo/internal-linking/site-test-1')
+      .send({ pages: [] })
+      .expect(400);
+  });
 });

@@ -77,4 +77,129 @@ describe('SeoService', () => {
     expect(result.score).toBeLessThan(100);
     expect(result.recommendations.length).toBe(3);
   });
+  describe('auditInternalLinking', () => {
+    it('should detect an orphan page (no incoming internal links)', () => {
+      const result = service.auditInternalLinking({
+        pages: [
+          {
+            url: 'https://example.com/a',
+            title: 'Page A',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['A'],
+            h2: [],
+            internalLinks: [],
+          },
+          {
+            url: 'https://example.com/b',
+            title: 'Page B',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['B'],
+            h2: [],
+            internalLinks: [],
+          },
+        ],
+      });
+
+      expect(
+        result.recommendations.some(
+          (r) => r.type === 'orphan_page' && r.page === 'https://example.com/a',
+        ),
+      ).toBe(true);
+      expect(
+        result.recommendations.some(
+          (r) => r.type === 'orphan_page' && r.page === 'https://example.com/b',
+        ),
+      ).toBe(true);
+    });
+
+    it('should detect a generic anchor text', () => {
+      const result = service.auditInternalLinking({
+        pages: [
+          {
+            url: 'https://example.com/a',
+            title: 'Page A',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['A'],
+            h2: [],
+            internalLinks: [{ url: 'https://example.com/b', anchorText: 'cliquez ici' }],
+          },
+          {
+            url: 'https://example.com/b',
+            title: 'Page B',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['B'],
+            h2: [],
+            internalLinks: [],
+          },
+        ],
+      });
+
+      expect(result.recommendations.some((r) => r.type === 'generic_anchor_text')).toBe(true);
+    });
+
+    it('should detect low anchor diversity toward the same target', () => {
+      const result = service.auditInternalLinking({
+        pages: [
+          {
+            url: 'https://example.com/a',
+            title: 'Page A',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['A'],
+            h2: [],
+            internalLinks: [{ url: 'https://example.com/c', anchorText: 'guide SEO' }],
+          },
+          {
+            url: 'https://example.com/b',
+            title: 'Page B',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['B'],
+            h2: [],
+            internalLinks: [{ url: 'https://example.com/c', anchorText: 'guide SEO' }],
+          },
+          {
+            url: 'https://example.com/c',
+            title: 'Guide SEO complet',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['Guide SEO complet'],
+            h2: [],
+            internalLinks: [],
+          },
+        ],
+      });
+
+      expect(
+        result.recommendations.some(
+          (r) => r.type === 'anchor_low_diversity' && r.page === 'https://example.com/c',
+        ),
+      ).toBe(true);
+    });
+
+    it('should not flag an orphan page when links exist between all pages', () => {
+      const result = service.auditInternalLinking({
+        pages: [
+          {
+            url: 'https://example.com/a',
+            title: 'Page A',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['A'],
+            h2: [],
+            internalLinks: [{ url: 'https://example.com/b', anchorText: 'découvrir la page B' }],
+          },
+          {
+            url: 'https://example.com/b',
+            title: 'Page B détaillée',
+            metaDescription: 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok',
+            h1: ['B'],
+            h2: [],
+            internalLinks: [{ url: 'https://example.com/a', anchorText: 'retour vers page A' }],
+          },
+        ],
+      });
+
+      expect(result.recommendations.some((r) => r.type === 'orphan_page')).toBe(false);
+    });
+  });
+
+
+
 });

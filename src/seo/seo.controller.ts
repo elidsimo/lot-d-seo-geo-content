@@ -2,6 +2,8 @@ import { Controller, Post, Param, Body, BadRequestException } from '@nestjs/comm
 import { SeoService } from './seo.service';
 import { CrawlFindingsSchema } from '../common/schemas/crawl-findings.schema';
 import { ApiTags } from '@nestjs/swagger';
+import { SiteCrawlSchema } from '../common/schemas/internal-linking.schema';
+
 
 @ApiTags('seo')
 @Controller('seo')
@@ -25,5 +27,14 @@ export class SeoController {
   @Post('audit-technique/:siteId')
   auditTechnique(@Param('siteId') siteId: string, @Body() body: any) {
     return this.seoService.auditTechnique(body);
+  }
+
+  @Post('internal-linking/:siteId')
+  internalLinking(@Param('siteId') siteId: string, @Body() body: unknown) {
+    const parsed = SiteCrawlSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.issues);
+    }
+    return this.seoService.auditInternalLinking(parsed.data);
   }
 }
