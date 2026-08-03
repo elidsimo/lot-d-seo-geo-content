@@ -53,18 +53,10 @@ npm install
 
 ## Configuration
 
-Crée un fichier `.env` à la racine du projet (non versionné, à créer soi-même) :
-
-```
-LLM_PROVIDER_API_KEY=ta_cle_gemini_ici
-LLM_PROVIDER_BASE_URL=https://generativelanguage.googleapis.com/v1beta
-LLM_PROVIDER_MODEL=gemini-3.5-flash-lite
-LLM_PROVIDER_EMBEDDING_MODEL=gemini-embedding-001
-LOT_A_HISTORY_ENDPOINT=http://localhost:3001/history
-LOT_A_BRAND_PARAMETERS_ENDPOINT=http://localhost:3001/brand-parameters
-MOCK_MODE=true
-DATABASE_URL=postgresql://postgres:ton_mot_de_passe@localhost:5432/postgres
-```
+Copie `.env.example` vers `.env` et renseigne tes propres valeurs :
+\`\`\`bash
+cp .env.example .env
+\`\`\`
 
 > Obtiens une clé Gemini gratuite sur https://aistudio.google.com/ → "Get API key" → "Create API key".
 
@@ -133,6 +125,8 @@ La documentation interactive Swagger/OpenAPI est disponible sur `http://localhos
 | POST | `/rag/index` | Indexe un document (texte + embedding) pour un client donné |
 | POST | `/rag/search` | Recherche par similarité sémantique, retourne les documents bruts |
 | POST | `/rag/retrieve` | Retourne un contexte déjà formaté, prêt à injecter dans un prompt LLM |
+
+⚠️ `/rag/index` et `/rag/search` sont réservés aux clients dont le plan autorise le RAG (fonctionnalité Premium, CDC section 3) — retournent `403` sinon. `/rag/retrieve` reste accessible à tous
 
 ## Tester un endpoint
 
@@ -263,3 +257,16 @@ Certains formats de données ont été définis unilatéralement en l'absence de
 ## Endpoints hors cahier des charges
 
 Quelques routes ont été ajoutées en plus de celles listées dans le CDC (section 5), pour correspondre au découpage des tâches Kanban : `/seo/internal-linking/:siteId`, `/geo/faq-quality/:pageId`, `/geo/entities/:pageId`, `/content/article`, `/content/faq`, `/content/pillar-page`, `/rag/retrieve`. À signaler aux lots B et E qui consomment ces endpoints.
+
+
+## Guide de prise en main rapide (nouveau stagiaire)
+
+1. Clone le dépôt et installe les dépendances : `npm install`
+2. Copie `.env.example` vers `.env`, renseigne ta clé Gemini (gratuite sur https://aistudio.google.com/) et un mot de passe PostgreSQL de ton choix
+3. Lance PostgreSQL avec pgvector (voir section "Base de données" ci-dessus)
+4. Indexe la base documentaire de test : `npm run seed:rag`
+5. Lance le serveur : `npm run start:dev`
+6. Ouvre `http://localhost:3000/api` pour explorer tous les endpoints via Swagger
+7. Lance `npm run test` puis `npm run test:e2e` pour vérifier que tout fonctionne
+8. Consulte `src/common/schemas/` pour comprendre le format exact attendu par chaque route
+9. Les fichiers marqués `// FORMAT PROVISOIRE` dépendent de décisions à confirmer avec le Lot A et le Lot C — vérifie s'ils ont été mis à jour avant de t'y fier
